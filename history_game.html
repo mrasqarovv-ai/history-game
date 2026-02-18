@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <title>Ортағасырлық Қазақстан Мәдениеті</title>
+    <style>
+        body {
+            background-color: #3e2723;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #2c1b10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .board {
+            background-color: #f5deb3;
+            border: 10px double #8b4513;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #5d4037;
+            text-transform: uppercase;
+            border-bottom: 2px solid #8b4513;
+        }
+
+        /* ТАРИХ САНДЫҒЫ */
+        .chest-area {
+            text-align: center;
+            padding: 20px;
+            background: #efe0c0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .big-btn {
+            background: #d4af37;
+            color: white;
+            padding: 15px 30px;
+            font-size: 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px #997a1d;
+        }
+
+        .big-btn:active { transform: translateY(2px); box-shadow: 0 2px #997a1d; }
+
+        #groupName {
+            font-size: 28px;
+            margin-top: 20px;
+            font-weight: bold;
+            color: #b22222;
+            height: 40px;
+        }
+
+        /* БАҒАЛАУ ЖУРНАЛЫ */
+        .student-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .student-item {
+            background: #fff;
+            padding: 10px;
+            border: 1px solid #8b4513;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.3s;
+        }
+
+        .score-badge {
+            background: #8b4513;
+            color: gold;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        /* БАҒДАРШАМ */
+        .traffic-light {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .circle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .red { background: #ff4444; }
+        .yellow { background: #ffbb33; }
+        .green { background: #00c851; }
+    </style>
+</head>
+<body>
+
+<div class="board">
+    <h1>XIII-XV ғғ. Қазақстан Мәдениеті</h1>
+
+    <section class="chest-area">
+        <h2>⚱️ Тарих сандығы</h2>
+        <button class="big-btn" onclick="splitToGroup()">Топты анықтау</button>
+        <div id="groupName">Батырманы басыңыз...</div>
+        <div id="groupCounts" style="font-size: 12px; color: #666;"></div>
+    </section>
+
+    <section>
+        <h2>📜 Бағалау журналы</h2>
+        <p style="font-size: 13px; text-align: center;">(Есімді басқан сайын +1 ұпай қосылады)</p>
+        <div class="student-grid" id="studentList"></div>
+    </section>
+
+    <section style="margin-top: 40px; border-top: 2px solid #8b4513;">
+        <h2>🚦 Кері байланыс</h2>
+        <div class="traffic-light">
+            <div class="circle red" onclick="feedback('red')">Түсінбедім</div>
+            <div class="circle yellow" onclick="feedback('yellow')">Сұрағым бар</div>
+            <div class="circle green" onclick="feedback('green')">Толық түсіндім</div>
+        </div>
+    </section>
+</div>
+
+<script>
+    // 1. Оқушылар тізімі (22 адам)
+    const students = [
+        "Адилхан Айдос", "Адилханов Асылбек", "Атабай Айзере", "Еркінқызы Нұрай",
+        "Жайылхан Еркебұлан", "Жарылғасова Асия", "Жолдасбай Рахман", "Жолдыбай Райана",
+        "Жұмагелді Нұрлан", "Ислам Жігер", "Қасым Гаухар", "Қуанышқызы Айзере",
+        "Құлжабай Қайсар", "Қыдырсейх Исламбек", "Мұхамбетали Балғынбек", "Наузбай Нұрай",
+        "Нұранова Ақерке", "Нұранұлы Ақылбек", "Оразбай Раян", "Сатдигул Алихан",
+        "Темір Диас", "Шаншарбай Айдана"
+    ];
+
+    // 2. Бағалау логикасы
+    const scores = {};
+    const listDiv = document.getElementById('studentList');
+
+    function renderStudents() {
+        listDiv.innerHTML = '';
+        students.forEach(name => {
+            if (scores[name] === undefined) scores[name] = 0;
+            
+            const div = document.createElement('div');
+            div.className = 'student-item';
+            
+            // Ұпай жиналса алтын түске өзгереді
+            if (scores[name] > 0) {
+                div.style.backgroundColor = `rgba(212, 175, 55, ${scores[name] / 10})`;
+            }
+
+            div.onclick = () => {
+                if (scores[name] < 10) {
+                    scores[name]++;
+                    renderStudents();
+                }
+            };
+            
+            div.innerHTML = `<span>${name}</span> <span class="score-badge">${scores[name]}</span>`;
+            listDiv.appendChild(div);
+        });
+    }
+    renderStudents();
+
+    // 3. Топқа бөлу логикасы
+    const groupTypes = ["Жыраулар", "Күйшілер", "Шежірешілер"];
+    const groupLimits = { "Жыраулар": 0, "Күйшілер": 0, "Шежірешілер": 0 };
+    let totalAssigned = 0;
+
+    function splitToGroup() {
+        if (totalAssigned >= 24) {
+            document.getElementById('groupName').innerText = "Топтар толды!";
+            return;
+        }
+
+        let randomGroup;
+        // Лимиті толмаған топты таңдау
+        do {
+            randomGroup = groupTypes[Math.floor(Math.random() * groupTypes.length)];
+        } while (groupLimits[randomGroup] >= 8);
+
+        groupLimits[randomGroup]++;
+        totalAssigned++;
+
+        document.getElementById('groupName').innerText = "Сіздің тобыңыз: " + randomGroup;
+        document.getElementById('groupCounts').innerText = 
+            `Жыраулар: ${groupLimits["Жыраулар"]}/8 | Күйшілер: ${groupLimits["Күйшілер"]}/8 | Шежірешілер: ${groupLimits["Шежірешілер"]}/8`;
+    }
+
+    // 4. Бағдаршам логикасы
+    function feedback(type) {
+        if (type === 'red') {
+            let name = prompt("Тақырыпты түсінбедім. Есіміңіз кім?");
+            if (name) alert(name + ", мұғалім сізге көмектеседі!");
+        } else if (type === 'yellow') {
+            let quest = prompt("Сұрағыңызды жазыңыз:");
+            if (quest) alert("Сұрағыңыз қабылданды!");
+        } else {
+            alert("Керемет! Тақырыпты толық меңгердіңіз!");
+        }
+    }
+</script>
+
+</body>
+</html>
